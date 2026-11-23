@@ -1,0 +1,40 @@
+# Push a tag such as v1.3.0 (the same number as "version" in djvu/plugin.json) to pack the plugin and attach it to a draft GitHub release (press Publish there).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: GitHub release
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: The tag must name the version of the plugin
+        run: |
+          version=$(jq -r .version djvu/plugin.json)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "The tag is $GITHUB_REF_NAME but djvu/plugin.json says $version"
+            exit 1
+          fi
+          jq -e '.api == 2 and .isolated == true and .id == "djvu"' djvu/plugin.json
+
+      - name: Pack the plugin
+        run: |
+          mkdir out
+          version=$(jq -r .version djvu/plugin.json)
+          zip -r "out/tapalog-reader-djvu-$version.zip" djvu
+          (cd out && sha256sum *.zip > SHA256SUMS.txt)
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # a draft: look at the notes and files on the Releases page, then press Publish
+        run: gh release create "$GITHUB_REF_NAME" out/* --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --draft --notes-file .github/release-notes.md

@@ -1,0 +1,19 @@
+{
+  "id": "djvu",
+  "name": "DjVu reader",
+  "version": "1.3.0",
+  "api": 2,
+  "isolated": true,
+  "formats": [
+    {
+      "ext": [
+        "djvu",
+        "djv"
+      ],
+      "mime": "image/vnd.djvu"
+    }
+  ],
+  "reader": "reader.js",
+  "shareableView": true,
+  "cover": true
+}
